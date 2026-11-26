@@ -18,7 +18,7 @@ function drawChart(v){let c=document.getElementById('chart'),ctx=c.getContext('2
 
 function drawCandles(){
  const c=document.getElementById('candleChart'); if(!c)return;
- const ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,dpr=window.devicePixelRatio||1;
+ const ctx=c.getContext('2d'),w=Math.max(c.clientWidth,320),h=Math.max(c.clientHeight,220),dpr=window.devicePixelRatio||1;
  c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
  let seed=prices.bitcoin||60000, vals=[],cur=seed;
  for(let i=0;i<36;i++){let open=cur,delta=(Math.sin(i*1.7)*0.006+Math.cos(i*.8)*.004)*seed,close=open+delta,high=Math.max(open,close)+seed*.002*(.3+(i%4)/4),low=Math.min(open,close)-seed*.002*(.3+(i%3)/3);vals.push({open,close,high,low});cur=close}
@@ -34,7 +34,7 @@ function renderBook(){
  const target=document.getElementById('orderBookRows');if(target)target.innerHTML=rows.join('');
 }
 
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');pageTitle.textContent={overview:'Market Overview',markets:'Markets',trade:'Demo Trading',wallet:'Demo Wallet',history:'Order History'}[b.dataset.page]});
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');pageTitle.textContent={overview:'Market Overview',markets:'Markets',trade:'Demo Trading',wallet:'Demo Wallet',history:'Order History'}[b.dataset.page];if(b.dataset.page==='trade'){renderBook();drawCandles()}if(b.dataset.page==='overview'){drawChart(null)}});
 pair.addEventListener('change',()=>{updatePairPrice();renderBook();drawCandles()});
 document.getElementById('tradeBtn').onclick=()=>{let id=pair.value,a=assets.find(x=>x.id===id),side=document.getElementById('side').value,amt=Number(amount.value),msg=document.getElementById('tradeMessage');if(!amt||amt<=0){msg.textContent='Please enter a valid USDT amount.';return}if(side==='buy'){if(amt>cash){msg.textContent='Not enough demo USDT.';return}cash-=amt;holdings[id]+=amt/prices[id]}else{let qty=amt/prices[id];if(qty>holdings[id]){msg.textContent='Not enough '+a.symbol+' in your demo wallet.';return}holdings[id]-=qty;cash+=amt}orders.unshift({side,symbol:a.symbol,amount:amt});historyRows.innerHTML=orders.map(o=>`<tr><td class="${o.side==='buy'?'green':'red'}">${o.side.toUpperCase()}</td><td>${o.symbol}/USDT</td><td>${fmt(o.amount)}</td><td>Demo complete</td></tr>`).join('');msg.textContent='Demo order simulated successfully.';render()};
 updatePrices();renderBook();drawCandles();setInterval(updatePrices,60000);window.addEventListener('resize',()=>{drawChart(null);drawCandles()});
